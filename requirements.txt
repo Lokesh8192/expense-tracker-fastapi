@@ -1,0 +1,12 @@
+fastapi 
+uvicorn
+sqlalchemy
+psycopg2-binary
+pydantic
+python-dotenv
+dnspython
+email-validator
+urllib3
+charset_normalizer
+certifi
+requests
