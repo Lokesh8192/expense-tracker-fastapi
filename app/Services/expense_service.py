@@ -7,9 +7,8 @@ from app.schemas.expense_schema import ExpenseCreate
 from sqlalchemy import func, extract
 
 
-def create_expense(db: Session, expense: ExpenseCreate, username: str):
-
-    user = db.query(User).filter(User.username == username, User.deleted == False).first()
+def create_expense(db: Session, expense: ExpenseCreate, user: User):
+    """Create a new expense for the given authenticated user."""
 
     new_expense = Expense(
         title=expense.title,
@@ -25,11 +24,10 @@ def create_expense(db: Session, expense: ExpenseCreate, username: str):
     return new_expense
 
 
-def get_all_expenses(db: Session, username: str):
+def get_all_expenses(db: Session, user: User):
+    """Fetch all expenses for a specific user."""
 
-    user = db.query(User).filter(User.username == username, User.deleted == False).first()
-
-    return db.query(Expense).filter(Expense.user_id == user.id,Expense.is_active == False).all()
+    return db.query(Expense).filter(Expense.user_id == user.id, Expense.is_active == False).all()
 
 
 def get_expense_by_id(db: Session, expense_id: int):
