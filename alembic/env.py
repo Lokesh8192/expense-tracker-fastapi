@@ -1,6 +1,7 @@
 from logging.config import fileConfig
 import os
 
+from dotenv import load_dotenv
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
@@ -8,22 +9,19 @@ from alembic import context
 from app.database.database import Base
 from app.models import expense_model, user_model
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
+load_dotenv()
+
 config = context.config
 
 database_url = os.getenv("DATABASE_URL")
 
-if database_url and database_url.startswith("postgres://"):
+if not database_url:
+    raise ValueError("DATABASE_URL is not set. Please check your .env file")
+
+if database_url.startswith("postgres://"):
     database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-config.set_main_option("sqlalchemy.url", database_url)
-
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
-
+config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
