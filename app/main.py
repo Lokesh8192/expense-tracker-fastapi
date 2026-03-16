@@ -10,6 +10,9 @@ app=FastAPI(
     version="1.0"
 )
 
+Base.metadata.create_all(bind=engine)
+
+
 app.add_middleware(LoggingMiddleware)
 
 app.include_router(expense_router.router)
