@@ -2,6 +2,7 @@ from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 from pydantic import EmailStr
 import os
 from dotenv import load_dotenv
+import resend
 
 load_dotenv()
 
@@ -16,14 +17,18 @@ conf = ConnectionConfig(
     USE_CREDENTIALS=True,
 )
 
+resend.api_key = os.getenv("RESEND_API_KEY")
+
 
 async def send_email(email: EmailStr, subject: str, body: str):
-    message = MessageSchema(
-        subject=subject, recipients=[email], body=body, subtype="html"
+    resend.Emails.send(
+        {
+            "from": "Expense Tracker <onboarding@resend.dev>",
+            "to": [email],
+            "subject": subject,
+            "html": body,
+        }
     )
-
-    fm = FastMail(conf)
-    await fm.send_message(message)
 
 
 # ✅ Welcome Email
