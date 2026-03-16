@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from app.database.database import engine,Base
 from app.routers import expense_router,auth_router
-from app.models import expense_model
+from app.models import expense_model, user_model
 from app.middleware.logging_middleware import LoggingMiddleware
 
 app=FastAPI(
