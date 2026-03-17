@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from jose import jwt
@@ -23,6 +25,7 @@ from app.utils.email_service import (
     send_email,
     send_welcome_email,
     send_password_reset_email,
+    send_verification_email,
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -39,17 +42,69 @@ async def register(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-
     new_user = create_user(db, user)
 
-    # send welcome email
-    background_tasks.add_task(send_welcome_email, new_user.email, new_user.username)
+    # -----------------------------------
+    # EMAIL VERIFICATION (MANDATORY)
+    # -----------------------------------
+    base_url = os.getenv("BASE_URL", "http://localhost:8000")
 
+    verification_token = jwt.encode(
+        {
+            "sub": new_user.email,
+            "exp": datetime.utcnow() + timedelta(hours=24),
+        },
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+    verification_link = f"{base_url}/auth/verify-email?token={verification_token}"
+
+    background_tasks.add_task(
+        send_verification_email,
+        new_user.email,
+        new_user.username,
+        verification_link,
+    )
+
+    # -----------------------------------
+    # RESPONSE
+    # -----------------------------------
     return {
         "success": True,
-        "message": "User registered successfully",
+        "message": ("User registered successfully. " "Please verify your email."),
         "data": new_user,
     }
+
+
+# ---------------------------------------------------------
+# EMAIL VERIFICATION
+# ---------------------------------------------------------
+@router.get("/verify-email")
+def verify_email(
+    token: str, background_tasks: BackgroundTasks, db: Session = Depends(get_db)
+):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=400, detail="Verification token expired")
+    except jwt.JWTError:
+        raise HTTPException(status_code=400, detail="Invalid verification token")
+
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.email_verified = True
+    db.commit()
+    db.refresh(user)
+
+    # Send welcome email once verified
+    background_tasks.add_task(send_welcome_email, user.email, user.username)
+
+    return {"status": "Success", "message": "Email verified successfully"}
 
 
 # ---------------------------------------------------------
@@ -118,9 +173,7 @@ async def forgot_password(
         algorithm=ALGORITHM,
     )
 
-    reset_link = (
-        f"https://expense-tracker-fastapi-3.onrender.com/reset-password?token={reset_token}"
-    )
+    reset_link = f"https://expense-tracker-fastapi-3.onrender.com/reset-password?token={reset_token}"
 
     background_tasks.add_task(send_password_reset_email, user.email, reset_link)
 

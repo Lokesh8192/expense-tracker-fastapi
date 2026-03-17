@@ -2,10 +2,11 @@ from pydantic import BaseModel, EmailStr, field_validator
 import re
 from typing import Optional
 
+
 class UserBase(BaseModel):
     username: str
     email: EmailStr
-    phone:str
+    phone: str
 
     @field_validator("username")
     @classmethod
@@ -20,8 +21,8 @@ class UserBase(BaseModel):
             raise ValueError("Username must contain only letters and numbers")
 
         return value
-    
-    #email mustend with @gmail.com 
+
+    # email mustend with @gmail.com
     @field_validator("email")
     @classmethod
     def validate_email(cls, value):
@@ -89,6 +90,7 @@ class UserLogin(BaseModel):
 
 class UserResponse(UserBase):
     id: int
+    email_verified: bool = False
 
     class Config:
         from_attributes = True

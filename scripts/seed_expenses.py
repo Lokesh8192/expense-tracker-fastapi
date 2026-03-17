@@ -3,7 +3,7 @@ import requests
 url = "http://127.0.0.1:8000/expenses"
 
 # Replace with your login token
-token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJMb2tlc2gyMzQiLCJleHAiOjE3NzM1MTA1MjR9.wzSNloTeDEKh-RL4QMRPiQaksbmJsjrS8PZEaN0JVmw"
+token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJMb2tpMTIzIiwiZXhwIjoxNzczNzU2NDQxfQ.Fc99CYcVsEim5gD3w1yNOOU-F3IzB_3pMqHt3RVkyWE"
 
 headers = {"Authorization": f"Bearer {token}"}
 

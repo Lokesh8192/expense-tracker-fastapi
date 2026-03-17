@@ -1,3 +1,5 @@
+import re
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
@@ -6,7 +8,15 @@ from app.schemas.user_schema import UserCreate, UserLogin
 from app.core.security import hash_password, verify_password
 
 
+def _normalize_phone(phone: str) -> str:
+    digits = re.sub(r"\D", "", phone or "")
+    if digits.startswith("91") and len(digits) == 12:
+        digits = digits[2:]
+    return digits
+
+
 def create_user(db: Session, user: UserCreate):
+    normalized_phone = _normalize_phone(user.phone)
 
     existing_user = (
         db.query(User)
@@ -14,7 +24,7 @@ def create_user(db: Session, user: UserCreate):
             or_(
                 User.username == user.username,
                 User.email == user.email,
-                User.phone == user.phone,
+                User.phone == normalized_phone,
             )
         )
         .first()
@@ -27,7 +37,7 @@ def create_user(db: Session, user: UserCreate):
     new_user = User(
         username=user.username,
         email=user.email,
-        phone=user.phone,
+        phone=normalized_phone,
         password=hash_password(user.password),
     )
 
@@ -62,6 +72,10 @@ def authenticate_user(db: Session, username_or_email: str, password: str):
     # check active status
     if not user.is_active:
         raise HTTPException(status_code=403, detail="User account deactivated")
+
+    # check email verification
+    if not getattr(user, "email_verified", False):
+        raise HTTPException(status_code=403, detail="Email not verified")
 
     return user
 
