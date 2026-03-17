@@ -3,6 +3,7 @@ from app.database.database import engine, Base
 from app.routers import expense_router, auth_router
 from app.models import expense_model, user_model
 from app.middleware.logging_middleware import LoggingMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import inspect, text
 
 
@@ -10,6 +11,18 @@ app = FastAPI(
     title="Expense Tracker API",
     description="FastAPI+Postgres Expense Tracker",
     version="1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://192.168.1.35:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
